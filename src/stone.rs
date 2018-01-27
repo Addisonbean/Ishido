@@ -13,7 +13,7 @@ pub enum Color {
 }
 
 impl Color {
-    fn to_color_style(self) -> ColorStyle {
+    pub fn to_color_style(self) -> ColorStyle {
         use self::Color::*;
         use self::CursiveColor::*;
         let (fg_color, black_text) = match self {
@@ -41,14 +41,14 @@ pub enum Symbol {
     And,
     Carrot,
     Equals,
-    // technically an octothorpe...
+    // technically it's an octothorpe...
     Hash, 
     Line,
     Star,
 }
 
 impl Symbol {
-    fn to_str(self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         use self::Symbol::*;
         match self {
             And => "&",
@@ -64,13 +64,5 @@ impl Symbol {
 pub struct Stone {
     pub color: Color,
     pub symbol: Symbol,
-}
-
-impl Stone {
-    pub fn print(&self, pos: Vec2, printer: &Printer) {
-        printer.with_color(self.color.to_color_style(), |p|
-            p.print(pos, self.symbol.to_str())
-        );
-    }
 }
 
