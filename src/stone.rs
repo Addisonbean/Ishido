@@ -4,11 +4,11 @@ use cursive::Printer;
 
 #[derive(Copy, Clone)]
 pub enum Color {
-    Red,
-    Green,
     Blue,
+    Green,
     Orange,
-    Yellow,
+    Pink,
+    Red,
     White,
 }
 
@@ -16,16 +16,20 @@ impl Color {
     fn to_color_style(self) -> ColorStyle {
         use self::Color::*;
         use self::CursiveColor::*;
-        let fg_color = match self {
-            Red => RgbLowRes(5, 0, 0),
-            Green => RgbLowRes(0, 5, 0),
-            Blue => RgbLowRes(0, 0, 5),
-            Orange => RgbLowRes(5, 3, 0),
-            Yellow => RgbLowRes(4, 4, 0),
-            White => RgbLowRes(5, 5, 5),
+        let (fg_color, black_text) = match self {
+            Blue => (RgbLowRes(0, 1, 4), false),
+            Green => (RgbLowRes(0, 5, 1), false),
+            Orange => (RgbLowRes(5, 4, 0), true),
+            Pink => (RgbLowRes(5, 1, 3), true),
+            Red => (RgbLowRes(5, 0, 0), false),
+            White => (RgbLowRes(5, 5, 5), true),
         };
         ColorStyle::Custom {
-            front: CursiveColor::TerminalDefault,
+            front: if black_text {
+                RgbLowRes(0, 0, 0)
+            } else {
+                RgbLowRes(5, 5, 5)
+            },
             back: fg_color,
         }
     }
@@ -34,25 +38,25 @@ impl Color {
 // TODO: use nifty unicode chars
 #[derive(Copy, Clone)]
 pub enum Symbol {
-    Star,
+    And,
     Carrot,
+    Equals,
     // technically an octothorpe...
     Hash, 
     Line,
-    Equals,
-    And,
+    Star,
 }
 
 impl Symbol {
     fn to_str(self) -> &'static str {
         use self::Symbol::*;
         match self {
-            Star => "*",
+            And => "&",
             Carrot => "^",
+            Equals => "=",
             Hash => "#",
             Line => "|",
-            Equals => "=",
-            And => "&",
+            Star => "*",
         }
     }
 }

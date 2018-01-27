@@ -5,3 +5,4 @@ authors = ["Addison Bean <addisonbean@gmail.com>"]
 
 [dependencies]
 cursive = "0.7"
+rand = "0.4"

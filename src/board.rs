@@ -1,6 +1,9 @@
 use cursive::view::View;
 use cursive::Printer;
 use cursive::vec::Vec2;
+
+use rand::{self, Rng};
+
 use stone::{Stone, Color, Symbol};
 
 const INSET: (usize, usize) = (1, 1);
@@ -13,10 +16,6 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn test(&mut self) {
-        self.cells[0][0] = Some(Stone { color: Color::Red, symbol: Symbol::Star });
-    }
-
     fn draw_cell(&self, pos: Vec2, printer: &Printer) {
         match &self.cells[pos.y][pos.x] {
             &Some(ref s) => s.print(pos + INSET, printer),
@@ -25,13 +24,27 @@ impl Board {
     }
 
     pub fn new() -> Board {
-        Board {
+        let mut b = Board {
             cells: Default::default(),
             cells_inset: Vec2::new(INSET.0, INSET.1),
-        }
+        };
+        b.init();
+        b
     }
 
-
+    fn init(&mut self) {
+        use stone::Symbol::*;
+        use stone::Color::*;
+        let mut colors = [Blue, Green, Orange, Pink, Red, White];
+        let mut symbols = [And, Carrot, Equals, Hash, Line, Star];
+        let coords = [(0, 0), (11, 0), (0, 7), (11, 7), (5, 3), (6, 4)];
+        rand::thread_rng().shuffle(&mut colors);
+        rand::thread_rng().shuffle(&mut symbols);
+        let iter = colors.iter().zip(symbols.iter()).zip(coords.iter());
+        for ((&color, &symbol), &(x, y)) in iter {
+            self.cells[y][x] = Some(Stone { color, symbol });
+        }
+    }
 }
 
 impl View for Board {

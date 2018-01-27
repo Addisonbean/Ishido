@@ -1,4 +1,5 @@
 extern crate cursive;
+extern crate rand;
 
 mod stone;
 mod board;
@@ -11,7 +12,6 @@ pub fn start_game(s: &mut Cursive) {
     s.pop_layer();
 
     let mut board = Board::new();
-    board.test();
 
     s.add_layer(board);
 }
