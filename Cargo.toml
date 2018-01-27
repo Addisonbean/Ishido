@@ -1,0 +1,7 @@
+[package]
+name = "ishido"
+version = "0.1.0"
+authors = ["Addison Bean <addisonbean@gmail.com>"]
+
+[dependencies]
+cursive = "0.7"
