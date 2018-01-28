@@ -1,3 +1,5 @@
+use std::cmp;
+
 use cursive::view::View;
 use cursive::Printer;
 use cursive::vec::Vec2;
@@ -7,16 +9,20 @@ use cursive::theme::Color::RgbLowRes;
 
 use rand::{self, Rng};
 
-use stone::{Stone, Color, Symbol};
+use stone::Stone;
 
 const INSET: (usize, usize) = (1, 1);
 const BOARD_SIZE: (usize, usize) = (12, 8);
-const VIEW_SIZE: (usize, usize) = (BOARD_SIZE.0 + INSET.0 * 2, BOARD_SIZE.1 + INSET.1 * 2);
+const VIEW_SIZE: (usize, usize) = (BOARD_SIZE.0 + INSET.0 * 2 + 20, BOARD_SIZE.1 + INSET.1 * 2);
+
+fn clamp<T: Ord>(n: T, min: T, max: T) -> T {
+    cmp::min(cmp::max(min, n), max)
+}
 
 pub struct Board {
     cells: [[Option<Stone>; 12]; 8],
-    cells_inset: Vec2,
     cursor_pos: Vec2,
+    next_stone: Stone,
 }
 
 impl Board {
@@ -44,8 +50,8 @@ impl Board {
     pub fn new() -> Board {
         let mut b = Board {
             cells: Default::default(),
-            cells_inset: Vec2::new(INSET.0, INSET.1),
             cursor_pos: Vec2::new(0, 0),
+            next_stone: rand::random(),
         };
         b.init();
         b
@@ -73,6 +79,11 @@ impl View for Board {
                 self.draw_cell(Vec2::new(x, y), printer);
             }
         }
+
+        let next = ("Next: ", Vec2::new(BOARD_SIZE.0 + INSET.0 * 2, INSET.1));
+        printer.print(next.1, next.0);
+
+        self.next_stone.print(next.1 + (next.0.len(), 0), printer);
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
@@ -82,13 +93,17 @@ impl View for Board {
     fn on_event(&mut self, event: Event) -> EventResult {
         use cursive::event::Key::*;
         if let Event::Key(k) = event {
-            match k {
-                Left => self.cursor_pos.x -= 1,
-                Right => self.cursor_pos.x += 1,
-                Up => self.cursor_pos.y -= 1,
-                Down => self.cursor_pos.y += 1,
-                _ => (),
-            }
+            let (dx, dy) = match k {
+                Left => (-1, 0),
+                Right => (1, 0),
+                Up => (0, -1),
+                Down => (0, 1),
+                _ => return EventResult::Ignored,
+            };
+            self.cursor_pos.x = clamp(self.cursor_pos.x as isize + dx,
+                0, BOARD_SIZE.0 as isize - 1) as usize;
+            self.cursor_pos.y = clamp(self.cursor_pos.y as isize + dy,
+                0, BOARD_SIZE.1 as isize - 1) as usize;
         }
         EventResult::Ignored
     }

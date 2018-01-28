@@ -1,4 +1,5 @@
 TODO
-* Add bounds checking for the cursor
-* Add a display for the next stone to be placed
+* Underline where the cursor is so it doesn't hide what's under it?
+* Add a way to place stones
+* Check is a stone can be placed in a given cell
 

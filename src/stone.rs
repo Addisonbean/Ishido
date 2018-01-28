@@ -2,6 +2,8 @@ use cursive::theme::{Color as CursiveColor, ColorStyle};
 use cursive::vec::Vec2;
 use cursive::Printer;
 
+use rand::{Rand, Rng};
+
 #[derive(Copy, Clone)]
 pub enum Color {
     Blue,
@@ -35,6 +37,17 @@ impl Color {
     }
 }
 
+impl Rand for Color {
+    fn rand<R: Rng>(rng: &mut R) -> Color {
+        use self::Color::*;
+        lazy_static! {
+            static ref COLORS: [Color; 6] =
+                [Blue, Green, Orange, Pink, Red, White];
+        }
+        COLORS[rng.gen::<usize>() % 6]
+    }
+}
+
 // TODO: use nifty unicode chars
 #[derive(Copy, Clone)]
 pub enum Symbol {
@@ -61,8 +74,36 @@ impl Symbol {
     }
 }
 
+impl Rand for Symbol {
+    fn rand<R: Rng>(rng: &mut R) -> Symbol {
+        use self::Symbol::*;
+        lazy_static! {
+            static ref SYMBOLS: [Symbol; 6] =
+                [And, Carrot, Equals, Hash, Line, Star];
+        }
+        SYMBOLS[rng.gen::<usize>() % 6]
+    }
+}
+
 pub struct Stone {
     pub color: Color,
     pub symbol: Symbol,
+}
+
+impl Stone {
+    pub fn print(&self, pos: Vec2, printer: &Printer) {
+        printer.with_color(self.color.to_color_style(), |p|
+            p.print(pos, self.symbol.to_str())
+        );
+    }
+}
+
+impl Rand for Stone {
+    fn rand<R: Rng>(rng: &mut R) -> Stone {
+        Stone {
+            color: Color::rand(rng),
+            symbol: Symbol::rand(rng),
+        }
+    }
 }
 
