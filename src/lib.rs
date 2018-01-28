@@ -1,7 +1,5 @@
 extern crate cursive;
 extern crate rand;
-#[macro_use]
-extern crate lazy_static;
 
 mod stone;
 mod board;
