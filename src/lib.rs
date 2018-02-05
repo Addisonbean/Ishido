@@ -1,5 +1,6 @@
 extern crate cursive;
 extern crate rand;
+extern crate permutohedron;
 
 mod stone;
 mod board;
