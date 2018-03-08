@@ -30,6 +30,7 @@ pub struct Board {
     stones: Vec<Stone>,
     score: u64,
     multiplier_exp: u64,
+    game_over: bool,
 }
 
 impl Board {
@@ -61,6 +62,7 @@ impl Board {
             stones: Vec::with_capacity(72),
             score: 0,
             multiplier_exp: 0,
+            game_over: false,
         };
         b.init();
         b
@@ -91,7 +93,7 @@ impl Board {
         }
     }
 
-    fn place_stone(&mut self) -> Result<(), MoveError> {
+    fn place_stone(&mut self) -> Result<bool, MoveError> {
         let Vec2 { x, y } = self.cursor_pos;
         if self.cells[y][x].is_some() {
             Err(MoveError::DoublePlace)
@@ -104,7 +106,7 @@ impl Board {
                     self.score += MATCH_BONUSES[self.multiplier_exp as usize];
                     self.multiplier_exp += 1;
                 }
-                Ok(())
+                Ok(self.is_game_over())
             } else {
                 self.stones.push(s);
                 Err(MoveError::InvalidMove)
@@ -143,6 +145,23 @@ impl Board {
         };
         (cond, neighbors.len())
     }
+
+    fn is_game_over(&self) -> bool {
+        if let Some(next_stone) = self.peek_next_stone() {
+            for (y, row) in self.cells.iter().enumerate() {
+                for x in 0..row.len() {
+                    if self.is_valid_move(Vec2::new(x, y), next_stone).0 {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+
+    fn peek_next_stone(&self) -> Option<&Stone> {
+        self.stones.last()
+    }
 }
 
 impl View for Board {
@@ -155,13 +174,18 @@ impl View for Board {
 
         let next = ("Next: ", Vec2::new(BOARD_SIZE.0 + INSET.0 * 2, INSET.1));
         printer.print(next.1, next.0);
-
         self.stones.last().map(|s| s.print(next.1 + (next.0.len(), 0), printer));
 
         let next = ("Score: ", Vec2::new(BOARD_SIZE.0 + INSET.0 * 2, INSET.1 + 2));
         printer.print(next.1, next.0);
-
         printer.print(next.1 + (next.0.len(), 0), &self.score.to_string());
+
+        if self.game_over {
+            printer.print(
+                Vec2::new(BOARD_SIZE.0 + INSET.0 * 2, INSET.1 + 4),
+                "Game over..."
+            );
+        }
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
@@ -178,7 +202,8 @@ impl View for Board {
                 Down => (0, 1),
                 Enter => {
                     // TODO: handle possible failures
-                    self.place_stone();
+                    self.place_stone()
+                        .map(|game_over| self.game_over = game_over);
                     return EventResult::Ignored;
                 },
                 _ => return EventResult::Ignored,
@@ -193,6 +218,7 @@ impl View for Board {
     }
 }
 
+#[derive(Eq, PartialEq)]
 enum MoveError {
     StackEmpty,
     DoublePlace,
