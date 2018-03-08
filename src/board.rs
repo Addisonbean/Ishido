@@ -17,6 +17,9 @@ const INSET: (usize, usize) = (1, 1);
 const BOARD_SIZE: (usize, usize) = (12, 8);
 const VIEW_SIZE: (usize, usize) = (BOARD_SIZE.0 + INSET.0 * 2 + 20, BOARD_SIZE.1 + INSET.1 * 2);
 
+const MATCH_BONUSES: [u64; 12] = [25, 50, 100, 200, 400, 600, 800, 1000, 5000,
+    10000, 25000, 50000];
+
 fn clamp<T: Ord>(n: T, min: T, max: T) -> T {
     cmp::min(cmp::max(min, n), max)
 }
@@ -25,6 +28,8 @@ pub struct Board {
     cells: [[Option<Stone>; 12]; 8],
     cursor_pos: Vec2,
     stones: Vec<Stone>,
+    score: u64,
+    multiplier_exp: u64,
 }
 
 impl Board {
@@ -54,6 +59,8 @@ impl Board {
             cells: Default::default(),
             cursor_pos: Vec2::new(0, 0),
             stones: Vec::with_capacity(72),
+            score: 0,
+            multiplier_exp: 0,
         };
         b.init();
         b
@@ -89,8 +96,14 @@ impl Board {
         if self.cells[y][x].is_some() {
             Err(MoveError::DoublePlace)
         } else if let Some(s) = self.stones.pop() {
-            if self.is_valid_move(self.cursor_pos, &s) {
+            let (valid, neighbors) = self.is_valid_move(self.cursor_pos, &s);
+            if valid {
                 self.cells[y][x] = Some(s);
+                self.score += 2u64.pow(neighbors as u32 + self.multiplier_exp as u32 - 1);
+                if neighbors == 4 {
+                    self.score += MATCH_BONUSES[self.multiplier_exp as usize];
+                    self.multiplier_exp += 1;
+                }
                 Ok(())
             } else {
                 self.stones.push(s);
@@ -101,7 +114,7 @@ impl Board {
         }
     }
 
-    fn is_valid_move(&self, pos: Vec2, stone: &Stone) -> bool {
+    fn is_valid_move(&self, pos: Vec2, stone: &Stone) -> (bool, usize) {
         let mut neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1)].iter().filter_map(|&(x, y)|
             match (pos.x as isize + x, pos.y as isize + y) {
                 (x, y) if x >= 0 && x < BOARD_SIZE.0 as isize && y >= 0 && y < BOARD_SIZE.1 as isize =>
@@ -109,7 +122,7 @@ impl Board {
                 _ => None,
             }
         ).collect::<Vec<_>>();
-        match neighbors.len() {
+        let cond = match neighbors.len() {
             0 => false,
             1 => neighbors[0].color == stone.color ||
                  neighbors[0].symbol == stone.symbol,
@@ -127,7 +140,8 @@ impl Board {
                 n[2].symbol == stone.symbol && n[3].symbol == stone.symbol
             ),
             _ => unreachable!(),
-        }
+        };
+        (cond, neighbors.len())
     }
 }
 
@@ -143,6 +157,11 @@ impl View for Board {
         printer.print(next.1, next.0);
 
         self.stones.last().map(|s| s.print(next.1 + (next.0.len(), 0), printer));
+
+        let next = ("Score: ", Vec2::new(BOARD_SIZE.0 + INSET.0 * 2, INSET.1 + 2));
+        printer.print(next.1, next.0);
+
+        printer.print(next.1 + (next.0.len(), 0), &self.score.to_string());
     }
 
     fn required_size(&mut self, _: Vec2) -> Vec2 {
